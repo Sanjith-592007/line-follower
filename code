@@ -1,0 +1,64 @@
+from machine import Pin, PWM
+import time
+
+# ---- Direction pins ----
+AIN1 = Pin(6, Pin.OUT)
+AIN2 = Pin(7, Pin.OUT)
+BIN1 = Pin(9, Pin.OUT)
+BIN2 = Pin(10, Pin.OUT)
+STBY = Pin(21, Pin.OUT)
+
+# ---- Enable driver FIRST, before anything else ----
+STBY.value(0)
+time.sleep(0.1)
+STBY.value(1)
+time.sleep(0.1)
+print("STBY set HIGH:", STBY.value())   # should print 1
+
+# ---- PWM (speed) pins ----
+PWMA = PWM(Pin(5))
+PWMB = PWM(Pin(8))
+PWMA.freq(1000)
+PWMB.freq(1000)
+
+SPEED = 150
+DUTY = int(SPEED / 255 * 65535)
+
+def motors_forward():
+    AIN1.value(1); AIN2.value(0)
+    BIN1.value(1); BIN2.value(0)
+    print("Motors: FORWARD | AIN1=%d AIN2=%d BIN1=%d BIN2=%d" % 
+          (AIN1.value(), AIN2.value(), BIN1.value(), BIN2.value()))
+
+def motors_backward():
+    AIN1.value(0); AIN2.value(1)
+    BIN1.value(0); BIN2.value(1)
+    print("Motors: BACKWARD | AIN1=%d AIN2=%d BIN1=%d BIN2=%d" % 
+          (AIN1.value(), AIN2.value(), BIN1.value(), BIN2.value()))
+
+def motors_stop():
+    AIN1.value(0); AIN2.value(0)
+    BIN1.value(0); BIN2.value(0)
+    PWMA.duty_u16(0)
+    PWMB.duty_u16(0)
+    print("Motors: STOPPED")
+
+def set_speed():
+    PWMA.duty_u16(DUTY)
+    PWMB.duty_u16(DUTY)
+    print("Speed set | duty=%d" % DUTY)
+
+try:
+    while True:
+        motors_forward()
+        set_speed()
+        time.sleep(5)
+
+        motors_backward()
+        set_speed()
+        time.sleep(5)
+
+except KeyboardInterrupt:
+    motors_stop()
+    STBY.value(0)
+    print("Test stopped, motors off.")\
